@@ -72,7 +72,7 @@ exports.getSpecificSeries = async (req, res) => {
             ratingAvg += r.rating;
         });
         ratingAvg = ratingAvg / data.ratings.length
-        
+
         res.status(200).json({success: true, serie: data, ratings: ratingAvg});
         }
         catch (err) {

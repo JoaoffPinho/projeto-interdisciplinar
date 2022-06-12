@@ -8,7 +8,7 @@
             <div class="card my-5">
               <form
                 class="card-body cardbody-color p-lg-5"
-                @submit.prevent="login"
+                @submit.prevent="handleLogin"
               >
                 <div class="text-center">
                   <h5>Iniciar Sessão</h5>
@@ -23,7 +23,7 @@
                   <input
                     type="text"
                     id="txtUsername"
-                    v-model="username"
+                    v-model="user.username"
                     required
                     class="form-control"
                     aria-describedby="emailHelp"
@@ -34,7 +34,7 @@
                   <input
                     type="password"
                     id="txtPassword"
-                    v-model="password"
+                    v-model="user.password"
                     required
                     class="form-control"
                     placeholder="Password"
@@ -64,7 +64,71 @@
 </template>
 
 <script>
-export default {};
+import { mapGetters } from "vuex";
+
+// To make code clear and easy to read, define User model
+class User {
+  constructor(username, password) {
+    this.username = username;
+    this.password = password;
+  }
+}
+
+
+export default {
+    name: "Login",
+
+  data() {
+    return {
+      user: new User("", "", ""),
+      loading: false,
+      message: "",
+      errors: [],
+    };
+  },
+
+  
+  computed: {
+    //check user logged in status using Vuex Store
+    ...mapGetters(["getMessage", "getLoggedIn", "getLoggedUser"]),
+  },
+
+  methods: {
+    //dispatch 'login' Action to Vuex Store
+    async handleLogin() {
+      this.loading = true;
+      this.errors = [];
+      if (this.user.username && this.user.password) {
+        //makes request by dispatching an action
+        try {
+          await this.$store.dispatch("login", this.user);
+          console.log(this.$store.getters.getLoggedUser.role)
+          // if successfull login, navigate to pages corresponding to logged user role
+          if (this.$store.getters.getLoggedUser.role == "admin")
+            this.$router.push("/admin");
+          else 
+            this.$router.push("/user");
+        } catch (error) {
+          this.message =
+            (error.response && error.response.data) ||
+            error.message ||
+            error.toString();
+        } finally {
+          this.loading = false;
+        }
+      } else {
+        this.loading = false;
+        if (!this.user.username) {
+          this.errors.push("Username required.");
+        }
+        if (!this.user.password) {
+          this.errors.push("Password required.");
+        }
+      }
+    },
+  },
+};
+
 </script>
 
 <style>

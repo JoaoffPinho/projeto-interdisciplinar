@@ -26,12 +26,18 @@ router.route('/:name/series/:serieTitle/favorites')
     .post(authController.verifyToken, userController.addSeriesFav)
     .patch(authController.verifyToken, userController.removeSerieFav)
     
+router.route('/:name/movies/:movieTitle/seen')
+    .post(authController.verifyToken, userController.addMovieSeen)
+    .patch(authController.verifyToken, userController.removeMovieSeen);
+
+router.route('/:name/series/:serieTitle/seen')
+    .post(authController.verifyToken, userController.addSeriesSeen)
+    .patch(authController.verifyToken, userController.removeSerieSeen)
+    
 router.route('/:name/quizzes/:quizzTitle')
     .patch(authController.verifyToken, userController.finishQuizz)
-    //.get(authController.verifyToken, userController.quizzList)
 
     router.all('*', function (req, res) {
-    //send an predefined error message 
     res.status(404).json({ message: 'USERS: what???' });
 })
 

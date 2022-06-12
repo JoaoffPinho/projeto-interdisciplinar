@@ -5,6 +5,8 @@ const config = require("../config/db.config.js");
 const db = require("../models/index.js");
 const User = db.users;
 const Quizz = db.quizzes;
+const Movie = db.movies;
+const Serie = db.series;
 
 
 
@@ -79,10 +81,10 @@ exports.login = async (req, res) => {
 exports.getRanking = async (req, res) => {
     try {
         let data = await User
-            .find({ $or: [{ role: "regular" }, { role: "advanced" }] })
+            .find()
             .select('name points') // select the fields (it will add _id): do not show versionKey
             .exec();
-        res.status(200).json({success: true, count, users: data});
+        res.status(200).json({success: true, users: data});
     }
     catch (err) {
         res.status(500).json({
@@ -145,22 +147,30 @@ exports.addMovieFav = async (req, res) => {
     if ( req.loggedUsername != req.params.name ) {
         res.status(400).json({ message: "Must be connected!" });
         return;
-    } else if (!req.body) { // validate request body data
-        res.status(400).json({ message: "Request body can not be empty!" });
-        return;
     }
 
+    let userFavMovVerification = await User.findOne({"name": req.params.name})
+    let foundMovie = false;
+    userFavMovVerification.favMovies.forEach(movie => {
+        if (movie.title === req.params.movieTitle){
+            foundMovie = true;
+        }
+    });
+    if (foundMovie)
+    return res.status(400).json({ message: "Already in favorites!" });
     
-
     try {
+        let dataMovie = await Movie.findOne({"title": req.params.movieTitle}).select("title image")
+        console.log(dataMovie);
+
         let user = await User.findOneAndUpdate(
             {"name": req.params.name},
-            { $push: 
+            { $push:
                 {
                     favMovies:
                     {
-                    title: req.body.title,
-                    image: req.body.image
+                    title: dataMovie.title,
+                    image: dataMovie.image
                     }
                 }
             },
@@ -188,16 +198,12 @@ exports.removeMovieFav = async (req, res) => {
     if ( req.loggedUsername != req.params.name ) {
         res.status(400).json({ message: "Must be connected!" });
         return;
-    } else if (!req.body) { // validate request body data
-        res.status(400).json({ message: "Request body can not be empty!" });
-        return;
     }
-
 
     try {
         let data = await User.findOneAndUpdate(
             {"name": req.params.name},
-            { $pull: {favMovies: {"title": req.body.title}}})
+            { $pull: {favMovies: {"title": req.params.movieTitle}}})
             console.log(data);
         res.status(201).json({ success: true, msg: "Fav. movie removed."});
         }
@@ -221,22 +227,34 @@ exports.addSeriesFav = async (req, res) => {
     if ( req.loggedUsername != req.params.name ) {
         res.status(400).json({ message: "Must be connected!" });
         return;
-    } else if (!req.body) { // validate request body data
-        res.status(400).json({ message: "Request body can not be empty!" });
-        return;
-    }
-
-    let serie = {
-        title: req.body.title,
-        image: req.body.image
     }
     
+    let userFavSerVerification = await User.findOne({"name": req.params.name})
+    let foundSerie = false;
+    userFavSerVerification.favSeries.forEach(serie => {
+        if (serie.title === req.params.serieTitle){
+            foundSerie = true;
+        }
+    });
+    if (foundSerie)
+    return res.status(400).json({ message: "Already in favorites!" });
 
     try {
-        let data = await User.findOneAndUpdate(
+        let dataSerie = await Serie.findOne({"title": req.params.serieTitle}).select("title image")
+        console.log(dataSerie);
+
+        let user = await User.findOneAndUpdate(
             {"name": req.params.name},
-            { $push: {favSeries: serie}})
-            console.log(data);
+            { $push:
+                {
+                    favSeries:
+                    {
+                    title: dataSerie.title,
+                    image: dataSerie.image
+                    }
+                }
+            })
+        console.log(user);
         res.status(201).json({ success: true, msg: "New fav. serie added."});
         }
         catch (err) {
@@ -259,16 +277,12 @@ exports.removeSerieFav = async (req, res) => {
     if ( req.loggedUsername != req.params.name ) {
         res.status(400).json({ message: "Must be connected!" });
         return;
-    } else if (!req.body) { // validate request body data
-        res.status(400).json({ message: "Request body can not be empty!" });
-        return;
     }
-
 
     try {
         let data = await User.findOneAndUpdate(
             {"name": req.params.name},
-            { $pull: {favSeries: {"title": req.body.title}}})
+            { $pull: {favSeries: {"title": req.params.serieTitle}}})
             console.log(data);
         res.status(201).json({ success: true, msg: "Fav. serie removed."});
         }
@@ -292,7 +306,18 @@ exports.finishQuizz = async (req, res) => {
     //     res.status(400).json({ message: "Request body can not be empty!" });
     //     return;
     // }
-    
+    let userQuizzDoneVerification = await User.findOne({"name": req.params.name})
+    let foundQuizz = false;
+    userQuizzDoneVerification.doneQuizz.forEach(serie => {
+        if (doneQuizz.title === req.params.quizzTitle){
+            foundQuizz = true;
+        }
+    });
+    if (foundQuizz)
+    return res.status(400).json({ message: "Already in favorites!" });
+
+
+
     try {
         let data = await Quizz
             .findOne({"title": req.params.quizzTitle})
@@ -328,3 +353,163 @@ exports.finishQuizz = async (req, res) => {
         });
     };
 };
+
+exports.addMovieSeen = async (req, res) => {
+    
+    if ( req.loggedUsername != req.params.name ) {
+        res.status(400).json({ message: "Must be connected!" });
+        return;
+    }
+
+    let userSeenMovVerification = await User.findOne({"name": req.params.name})
+    let foundMovieSeen = false;
+    userSeenMovVerification.seenMovies.forEach(movie => {
+        if (movie.title === req.params.movieTitle){
+            foundMovieSeen = true;
+        }
+    });
+    if (foundMovieSeen)
+    return res.status(400).json({ message: "Already in seen!" });
+    
+    try {
+        let dataMovie = await Movie.findOne({"title": req.params.movieTitle}).select("title image")
+        console.log(dataMovie);
+
+        let user = await User.findOneAndUpdate(
+            {"name": req.params.name},
+            { $push:
+                {
+                    seenMovies:
+                    {
+                    title: dataMovie.title,
+                    image: dataMovie.image
+                    }
+                }
+            },
+            { new: true, useFindAndModify: false })
+            console.log(user);
+        res.status(201).json({ success: true, msg: "New seen movie added."});
+        }
+        catch (err) {
+            if (err.name === "ValidationError") {
+                let errors = [];
+                Object.keys(err.errors).forEach((key) => {
+                    errors.push(err.errors[key].message);
+                });
+                return res.status(400).json({ success: false, msgs: errors });
+            } 
+            else
+                res.status(500).json({
+                    success: false, msg: err.message || "Ocorreu um erro ao addicionar este filme "
+                });
+        };
+};
+
+exports.removeMovieSeen = async (req, res) => {
+    
+    if ( req.loggedUsername != req.params.name ) {
+        res.status(400).json({ message: "Must be connected!" });
+        return;
+    }
+
+    try {
+        let data = await User.findOneAndUpdate(
+            {"name": req.params.name},
+            { $pull: {seenMovies: {"title": req.params.movieTitle}}})
+            console.log(data);
+        res.status(201).json({ success: true, msg: "Seen movie removed."});
+        }
+        catch (err) {
+            if (err.name === "ValidationError") {
+                let errors = [];
+                Object.keys(err.errors).forEach((key) => {
+                    errors.push(err.errors[key].message);
+                });
+                return res.status(400).json({ success: false, msgs: errors });
+            } 
+            else
+                res.status(500).json({
+                    success: false, msg: err.message || "Ocorreu um erro ao criar este commentario"
+                });
+        };
+};
+
+exports.addSeriesSeen = async (req, res) => {
+    
+    if ( req.loggedUsername != req.params.name ) {
+        res.status(400).json({ message: "Must be connected!" });
+        return;
+    }
+    
+    let userSeenSerVerification = await User.findOne({"name": req.params.name})
+    let foundSerie = false;
+    userSeenSerVerification.seenSeries.forEach(serie => {
+        if (serie.title === req.params.serieTitle){
+            foundSerie = true;
+        }
+    });
+    if (foundSerie)
+    return res.status(400).json({ message: "Already seen!" });
+
+    try {
+        let dataSerie = await Serie.findOne({"title": req.params.serieTitle}).select("title image")
+        console.log(dataSerie);
+
+        let user = await User.findOneAndUpdate(
+            {"name": req.params.name},
+            { $push:
+                {
+                    seenSeries:
+                    {
+                    title: dataSerie.title,
+                    image: dataSerie.image
+                    }
+                }
+            })
+        console.log(user);
+        res.status(201).json({ success: true, msg: "New fav. serie added."});
+        }
+        catch (err) {
+            if (err.name === "ValidationError") {
+                let errors = [];
+                Object.keys(err.errors).forEach((key) => {
+                    errors.push(err.errors[key].message);
+                });
+                return res.status(400).json({ success: false, msgs: errors });
+            } 
+            else
+                res.status(500).json({
+                    success: false, msg: err.message || "Ocorreu um erro ao criar este commentario"
+                });
+        };
+};
+
+exports.removeSerieSeen = async (req, res) => {
+    
+    if ( req.loggedUsername != req.params.name ) {
+        res.status(400).json({ message: "Must be connected!" });
+        return;
+    }
+
+    try {
+        let data = await User.findOneAndUpdate(
+            {"name": req.params.name},
+            { $pull: {seenSeries: {"title": req.params.serieTitle}}})
+            console.log(data);
+        res.status(201).json({ success: true, msg: "Seen serie removed."});
+        }
+        catch (err) {
+            if (err.name === "ValidationError") {
+                let errors = [];
+                Object.keys(err.errors).forEach((key) => {
+                    errors.push(err.errors[key].message);
+                });
+                return res.status(400).json({ success: false, msgs: errors });
+            } 
+            else
+                res.status(500).json({
+                    success: false, msg: err.message || "Ocorreu um erro ao criar este commentario"
+                });
+        };
+};
+
