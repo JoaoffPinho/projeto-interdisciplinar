@@ -10,7 +10,7 @@ import API_URL from './config.js'
 
 export const AuthService = {
     async login(user) { // payload = user (username + password)
-        const response = await fetch(`http://127.0.0.1:3000/users/login`, {
+        const response = await fetch(`${API_URL}users/login`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

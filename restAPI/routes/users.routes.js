@@ -14,6 +14,9 @@ router.route('/login')
 router.route('/ranking')
     .get(authController.verifyToken, userController.getRanking) 
 
+router.route('/home')
+    .get(userController.getHomeInfo) 
+
 router.route('/:name')
     .get(authController.verifyToken, userController.getUserInfo)
     .patch(authController.verifyToken, userController.changeInfo);

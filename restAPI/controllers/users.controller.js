@@ -9,7 +9,6 @@ const Movie = db.movies;
 const Serie = db.series;
 
 
-
 exports.createUser = async (req, res) => {
     
     const user = new User({
@@ -141,6 +140,36 @@ exports.changeInfo = async (req, res) => {
         });
     };
 };
+
+exports.getHomeInfo = async (req, res) => { 
+    
+    try {
+        let data = []
+        let serie = await Serie
+            .find()
+            .select('title image')
+            .limit(3)
+            .exec();
+        let quizz = await Quizz
+            .find()
+            .select('title image')
+            .limit(3)
+            .exec();
+        let movie = await Movie
+            .find()
+            .select('title image')
+            .limit(3)
+            .exec();
+
+        data.push(serie,quizz,movie)
+        res.status(200).json(data);
+        }
+        catch (err) {
+            res.status(500).json({
+                success: false, msg: err.message || "Some error occurred while retrieving the movies."
+            });
+        };
+}; 
 
 exports.addMovieFav = async (req, res) => {
     
